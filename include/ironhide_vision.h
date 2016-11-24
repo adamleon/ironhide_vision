@@ -7,9 +7,17 @@
 #include <pcl/surface/vtk_smoothing/vtk_utils.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <vector>
+#include <Eigen/Core>
+#include <yaml-cpp/yaml.h>
+#include <string.h>
+#include <sstream>
+#include <iomanip>
 
 #include "ray_trace_cloud.h"
+#include "ray_trace_cloud_exceptions.h"
 
 class RayTraceCloudLoader {
 public:

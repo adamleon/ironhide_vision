@@ -1,4 +1,4 @@
-#include "ray_trace_cloud_loader.h"
+#include "ironhide_vision.h"
 
 RayTraceCloudLoader::RayTraceCloudLoader(pcl::PolygonMesh mesh, std::string mesh_name) : RayTraceCloudLoader(mesh_name) {
     this->mesh = mesh;
@@ -6,15 +6,16 @@ RayTraceCloudLoader::RayTraceCloudLoader(pcl::PolygonMesh mesh, std::string mesh
 
 RayTraceCloudLoader::RayTraceCloudLoader(std::string mesh_name) {
     this->setTesselation_level(1);
-    this->setCloudResolution(960);
-    this->setPath(ros::package::getPath("ironhide_vision_control") + "/trace_clouds/");
+    this->setCloudResolution(200);
+    this->setPath("./trace_clouds/");
     this->mesh_name = mesh_name;
 }
 
 void RayTraceCloudLoader::populateLoader() {
     if(!this->loadPointClouds()) {
         if(this->mesh.cloud.data.size() == 0) {
-            ROS_ERROR("There is no defined mesh to generate clouds from");
+            MeshLoadException e;
+            throw e;
             return;
         }
         this->generatePointClouds();
@@ -37,12 +38,12 @@ void RayTraceCloudLoader::generatePointClouds() {
     pcl::VTKUtils::convertToVTK(this->mesh, meshVTK);
 
     // Set up trace generation
-    /*ROS_INFO("Generating traces...");
-    ROS_INFO("\033[32m  Current settings:");
-    ROS_INFO("\033[32m    -mesh_name: %s", this->mesh_name.c_str());
-    ROS_INFO("\033[32m    -cloud_resolution: %d", this->cloud_resolution);
-    ROS_INFO("\033[32m    -tesselation_level: %d", this->tesselation_level);
-*/
+    std::cout << "Generating traces..." << std::endl;
+    std::cout << "\033[32m  Current settings:" << std::endl;
+    std::cout << "\033[32m    -mesh_name: " << this->mesh_name.c_str() << std::endl;
+    std::cout << "\033[32m    -cloud_resolution: " << this->cloud_resolution << std::endl;
+    std::cout << "\033[32m    -tesselation_level: " << this->tesselation_level << std::endl;
+
     pcl::visualization::PCLVisualizer generator("Generating traces...");
     generator.addModelFromPolyData (meshVTK, "mesh", 0);
     std::vector<pcl::PointCloud<pcl::PointXYZ>, Eigen::aligned_allocator<pcl::PointCloud<pcl::PointXYZ> > > clouds;
@@ -72,8 +73,8 @@ bool RayTraceCloudLoader::savePointClouds() {
 
     // Set saving path
     std::string save_path = this->path + "/" + this->mesh_name + "/";
-    ROS_INFO("Saving ray traces");
-    ROS_INFO("\tUsing %s", save_path.c_str());
+    std::cout << "Saving ray traces" << std::endl;
+    std::cout << "\tUsing " << save_path.c_str() << std::endl;
 
     // Generate YAML node
     YAML::Node clouds;
@@ -104,7 +105,7 @@ bool RayTraceCloudLoader::savePointClouds() {
     out << clouds;
     boost::filesystem::ofstream f(save_path + this->mesh_name + ".yaml");
     f << out.c_str();
-    ROS_INFO("\033[33mSuccessfully saved %d ray traces", (int)this->ray_trace_clouds.size());
+    std::cout << "\033[33mSuccessfully saved " << (int)this->ray_trace_clouds.size() << " ray traces" << std::endl;
 };
 
 
@@ -115,12 +116,12 @@ bool RayTraceCloudLoader::loadPointClouds() {
 
     // Try to load the files
     try {
-        ROS_INFO("Loading ray trace clouds...");
-        ROS_INFO("\tUsing %s", save_path.c_str());
+        std::cout << "Loading ray trace clouds..." << std::endl;
+        std::cout << "\tUsing " << save_path.c_str() << std::endl;
         clouds = YAML::LoadFile(save_path + this->mesh_name + ".yaml");
     }
     catch (const std::exception& e) {
-        ROS_INFO("\033[31mFile not found.\033[0m");
+        std::cout << "\033[31mFile not found.\033[0m" << std::endl;
         return  false;
     }
 
@@ -146,6 +147,7 @@ bool RayTraceCloudLoader::loadPointClouds() {
         cloud_node.str(std::string());
         cloud_node << setfill('0') << setw(4) << ++i;
     }
-    ROS_INFO("\033[33mSuccessfully loaded %d ray traces\033[0m", i-1);
+    std::cout << "\033[33mSuccessfully loaded " << i-1 << " ray traces\033[0m" << std::endl;
+
     return true;
 }
