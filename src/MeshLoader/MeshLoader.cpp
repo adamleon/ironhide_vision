@@ -129,7 +129,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr MeshLoader::getMeshCloud() {
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 	
 	if(this->m_mesh_initialized) {
-		generatePointCloud(m_mesh, 1000, point_cloud);
+		generatePointCloud(m_mesh, 5000, point_cloud);
 	}
 
 	return point_cloud;
