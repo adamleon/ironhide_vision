@@ -1,4 +1,17 @@
-#include "ironhide_vision.h"
+#include "ray_trace_cloud_loader.h"
+
+namespace ih
+{
+
+RayTraceCloudLoader::RayTraceCloudLoader(std::string mesh_path, std::string mesh_name, float scale) : RayTraceCloudLoader(mesh_name) {
+    std::cout << "Loading STL file " << mesh_path.c_str() << mesh_name.c_str() << std::endl;
+    pcl::io::loadPolygonFileSTL(mesh_path + mesh_name, this->mesh);
+    pcl::PointCloud<pcl::PointXYZ> scaled_mesh_cloud;
+    Eigen::Matrix4f scalefactor = Eigen::Matrix4f::Identity() * scale;
+    pcl::fromPCLPointCloud2(mesh.cloud, scaled_mesh_cloud);
+    pcl::transformPointCloud(scaled_mesh_cloud, scaled_mesh_cloud, scalefactor);
+    pcl::toPCLPointCloud2(scaled_mesh_cloud, mesh.cloud);
+}
 
 RayTraceCloudLoader::RayTraceCloudLoader(pcl::PolygonMesh mesh, std::string mesh_name) : RayTraceCloudLoader(mesh_name) {
     this->mesh = mesh;
@@ -90,7 +103,7 @@ bool RayTraceCloudLoader::savePointClouds() {
 
         YAML::Node node;
         node["cloud"] = filename.str();
-        for(int j = 0; j < 16; j++) {
+        for(int j = 0; j < 16; ++j) {
             node["pose"].push_back(ray_trace.pose(j / 4, j % 4));
         }
         node["enthropy"] = ray_trace.enthropy;
@@ -121,7 +134,7 @@ bool RayTraceCloudLoader::loadPointClouds() {
         clouds = YAML::LoadFile(save_path + this->mesh_name + ".yaml");
     }
     catch (const std::exception& e) {
-        std::cout << "\033[31mFile not found.\033[0m" << std::endl;
+        std::cout << "\033[31m" << e.what() << "\033[""0m" << std::endl;
         return  false;
     }
 
@@ -136,8 +149,8 @@ bool RayTraceCloudLoader::loadPointClouds() {
         RayTraceCloud ray_trace;
         ray_trace.cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::io::loadPCDFile(save_path + cloud["cloud"].as<std::string>(), *ray_trace.cloud);
-        for(int x = 0; x < 4; x++) {
-            for(int y = 0; y < 4; y++) {
+        for(int x = 0; x < 4; ++x) {
+            for(int y = 0; y < 4; ++y) {
                 ray_trace.pose(x, y) = cloud["pose"][(int)(x*4 + y)].as<float>();
             }
         }
@@ -151,3 +164,5 @@ bool RayTraceCloudLoader::loadPointClouds() {
 
     return true;
 }
+
+} // End of namespace
