@@ -12,6 +12,11 @@
 #include <pcl/io/vtk_lib_io.h>
 #include <vtkTriangle.h>
 #include <pcl/PCLPointCloud2.h>
+#include <pcl/filters/filter.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/statistical_outlier_removal.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 #include <Eigen/Core>
 

@@ -15,7 +15,7 @@ void MeshLoader::loadMesh(std::string t_mesh_filename, std::string t_mesh_path) 
 		throw std::invalid_argument("Mesh filename parameter is empty");
 	}
 
-	if(t_mesh_path.back() != '/') {
+	if(*t_mesh_path.rbegin() != '/') {
 		t_mesh_path.push_back('/');
 	}
 
@@ -126,13 +126,39 @@ void generatePointCloud(
 }
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr MeshLoader::getMeshCloud() {
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud (new pcl::PointCloud<pcl::PointXYZ>);
 	
 	if(this->m_mesh_initialized) {
-		generatePointCloud(m_mesh, 5000, point_cloud);
-	}
 
-	return point_cloud;
+        vtkSmartPointer<vtkPolyData> meshVTK;
+        pcl::VTKUtils::convertToVTK(this->m_mesh, meshVTK);
+
+        pcl::visualization::PCLVisualizer generator("Generating traces...");
+        generator.addModelFromPolyData (meshVTK, "mesh", 0);
+        std::vector<pcl::PointCloud<pcl::PointXYZ>, Eigen::aligned_allocator<pcl::PointCloud<pcl::PointXYZ> > > clouds;
+        std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > poses;
+        std::vector<float> enthropies;
+
+        // Generate traces
+        generator.renderViewTesselatedSphere(200, 200, clouds, poses, enthropies, 1);
+
+        for(int i =0; i < 1; i++)
+        {
+            //Eigen::Matrix4f transform = poses.at(i).inverse();
+            //pcl::transformPointCloud(clouds.at(i), clouds.at(i), transform);
+            *point_cloud += clouds.at(i);
+	   }
+    }
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::copyPointCloud(*point_cloud, *p_cloud);
+/*
+    pcl::VoxelGrid<pcl::PointXYZRGB> voxel_grid;
+    voxel_grid.setInputCloud(p_cloud);
+    voxel_grid.setLeafSize(0.3f, 0.3f, 0.3f);
+    voxel_grid.filter(*p_cloud);
+*/
+	return p_cloud;
 }
 
 }
